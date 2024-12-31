@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.milo.opcua.stack.core.encoding.DataTypeCodec;
 import org.eclipse.milo.opcua.stack.core.types.DataTypeDictionary;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
+import org.jspecify.annotations.Nullable;
 import org.opcfoundation.opcua.binaryschema.TypeDescription;
 import org.opcfoundation.opcua.binaryschema.TypeDictionary;
-import org.jspecify.annotations.Nullable;
 
 public class BinaryDataTypeDictionary implements DataTypeDictionary {
 

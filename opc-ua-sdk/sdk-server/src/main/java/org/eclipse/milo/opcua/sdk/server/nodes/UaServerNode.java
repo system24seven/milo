@@ -51,8 +51,7 @@ public interface UaServerNode extends Node {
    * @param attributeId the {@link AttributeId} to get.
    * @return the attribute value.
    */
-  @Nullable
-  Object getAttribute(AccessContext context, AttributeId attributeId);
+  @Nullable Object getAttribute(AccessContext context, AttributeId attributeId);
 
   /**
    * Read an attribute of this node, considering an {@link AccessContext}.
@@ -65,8 +64,7 @@ public interface UaServerNode extends Node {
    * @return the attribute value.
    * @throws UaException if the attribute cannot be read.
    */
-  @Nullable
-  Object readAttribute(AccessContext context, AttributeId attributeId) throws UaException;
+  @Nullable Object readAttribute(AccessContext context, AttributeId attributeId) throws UaException;
 
   /**
    * Set an attribute of this node, considering an {@link AccessContext}.

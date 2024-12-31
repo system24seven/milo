@@ -77,8 +77,7 @@ public interface UaSession {
    * @param name the name the attribute is bound to.
    * @return the attribute value.
    */
-  @Nullable
-  Object getAttribute(@NonNull String name);
+  @Nullable Object getAttribute(@NonNull String name);
 
   /**
    * Binds an attribute to this session, using the name specified.
@@ -89,8 +88,7 @@ public interface UaSession {
    * @param value the attribute value.
    * @return the previously bound value, or {@code null} if none exists.
    */
-  @Nullable
-  Object setAttribute(@NonNull String name, @NonNull Object value);
+  @Nullable Object setAttribute(@NonNull String name, @NonNull Object value);
 
   /**
    * Removes the attribute bound with the specified name from this session.
@@ -101,6 +99,5 @@ public interface UaSession {
    * @param name the name the attribute is bound to.
    * @return the previously bound value, or {@code null} if none exists.
    */
-  @Nullable
-  Object removeAttribute(@NonNull String name);
+  @Nullable Object removeAttribute(@NonNull String name);
 }

@@ -22,7 +22,6 @@ public interface Operator<T> {
 
   void validate(FilterContext context, FilterOperand[] operands) throws ValidationException;
 
-  @Nullable
-  T apply(OperatorContext context, BaseEventTypeNode eventNode, FilterOperand[] operands)
+  @Nullable T apply(OperatorContext context, BaseEventTypeNode eventNode, FilterOperand[] operands)
       throws UaException;
 }

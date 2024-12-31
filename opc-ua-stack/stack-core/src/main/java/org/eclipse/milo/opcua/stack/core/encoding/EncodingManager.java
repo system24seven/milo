@@ -20,9 +20,7 @@ public interface EncodingManager {
 
   boolean hasEncoding(QualifiedName encodingName);
 
-  @Nullable
-  DataTypeEncoding getEncoding(QualifiedName encodingName);
+  @Nullable DataTypeEncoding getEncoding(QualifiedName encodingName);
 
-  @Nullable
-  DataTypeEncoding removeEncoding(QualifiedName encodingName);
+  @Nullable DataTypeEncoding removeEncoding(QualifiedName encodingName);
 }

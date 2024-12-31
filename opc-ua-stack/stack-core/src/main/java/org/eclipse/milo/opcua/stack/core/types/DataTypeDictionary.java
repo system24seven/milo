@@ -19,13 +19,11 @@ public interface DataTypeDictionary {
 
   String getNamespaceUri();
 
-  @Nullable
-  DataTypeCodec getCodec(String description);
+  @Nullable DataTypeCodec getCodec(String description);
 
   void registerType(Type type);
 
-  @Nullable
-  Type getType(String description);
+  @Nullable Type getType(String description);
 
   List<Type> getTypes();
 

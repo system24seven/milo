@@ -29,8 +29,7 @@ public interface Identity {
   /**
    * @return the user data object associated with this identity.
    */
-  @Nullable
-  Object getUserData();
+  @Nullable Object getUserData();
 
   /**
    * Associate an arbitrary user data object with this identity.
