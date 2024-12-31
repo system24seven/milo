@@ -10,7 +10,6 @@
 
 package org.eclipse.milo.opcua.sdk.core.dtd;
 
-import com.sun.istack.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +18,7 @@ import org.eclipse.milo.opcua.stack.core.types.DataTypeDictionary;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.opcfoundation.opcua.binaryschema.TypeDescription;
 import org.opcfoundation.opcua.binaryschema.TypeDictionary;
+import org.jspecify.annotations.Nullable;
 
 public class BinaryDataTypeDictionary implements DataTypeDictionary {
 

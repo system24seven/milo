@@ -13,7 +13,7 @@ package org.eclipse.milo.opcua.sdk.core.typetree;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.structured.DataTypeDefinition;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface DataType extends TypeTree.Type {
 

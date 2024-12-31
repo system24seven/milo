@@ -13,7 +13,7 @@ package org.eclipse.milo.opcua.stack.core.security;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface CertificateStore {
 

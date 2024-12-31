@@ -20,6 +20,14 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+  </dependencies>
+
   <artifactId>milo-opc-ua-sdk</artifactId>
   <packaging>pom</packaging>
 

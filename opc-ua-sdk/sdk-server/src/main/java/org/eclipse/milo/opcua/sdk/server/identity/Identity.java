@@ -17,7 +17,7 @@ import org.eclipse.milo.opcua.stack.core.types.structured.AnonymousIdentityToken
 import org.eclipse.milo.opcua.stack.core.types.structured.IssuedIdentityToken;
 import org.eclipse.milo.opcua.stack.core.types.structured.UserNameIdentityToken;
 import org.eclipse.milo.opcua.stack.core.types.structured.X509IdentityToken;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface Identity {
 

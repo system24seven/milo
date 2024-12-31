@@ -16,7 +16,7 @@ import org.eclipse.milo.opcua.sdk.core.nodes.Node;
 import org.eclipse.milo.opcua.sdk.server.AccessContext;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.UaException;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface UaServerNode extends Node {
 
