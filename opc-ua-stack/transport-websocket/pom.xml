@@ -42,12 +42,6 @@
       <artifactId>netty-codec-http</artifactId>
       <version>${netty.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.jspecify</groupId>
-      <artifactId>jspecify</artifactId>
-      <version>${jspecify.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
