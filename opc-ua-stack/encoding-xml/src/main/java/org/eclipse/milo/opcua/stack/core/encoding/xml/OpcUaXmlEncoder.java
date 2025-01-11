@@ -10,10 +10,20 @@
 
 package org.eclipse.milo.opcua.stack.core.encoding.xml;
 
+import java.io.StringWriter;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.UaRuntimeException;
 import org.eclipse.milo.opcua.stack.core.UaSerializationException;
@@ -51,10 +61,10 @@ public class OpcUaXmlEncoder implements UaEncoder {
   private Document document;
   private Node currentNode;
 
-  private final EncodingContext context;
+  EncodingContext encodingContext;
 
   public OpcUaXmlEncoder(EncodingContext context) {
-    this.context = context;
+    this.encodingContext = context;
 
     try {
       builder = SecureXmlUtil.SHARED_DOCUMENT_BUILDER_FACTORY.newDocumentBuilder();
@@ -68,7 +78,7 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public EncodingContext getEncodingContext() {
-    return context;
+    return encodingContext;
   }
 
   public Document getDocument() {
@@ -76,7 +86,20 @@ public class OpcUaXmlEncoder implements UaEncoder {
   }
 
   public String getDocumentXml() {
-    return "";
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    try {
+      Transformer transformer = transformerFactory.newTransformer();
+      StringWriter stringWriter = new StringWriter();
+      transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+      return stringWriter.toString();
+    } catch(TransformerException e) {
+      throw new UaRuntimeException(StatusCodes.Bad_InternalError, e);
+    }
+  }
+
+  public void reset(){
+    document = builder.newDocument();
+    currentNode = document;
   }
 
   @Override
@@ -89,52 +112,148 @@ public class OpcUaXmlEncoder implements UaEncoder {
   }
 
   @Override
-  public void encodeSByte(String field, Byte value) throws UaSerializationException {}
+  public void encodeSByte(String field, Byte value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeInt16(String field, Short value) throws UaSerializationException {}
+  public void encodeInt16(String field, Short value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeInt32(String field, Integer value) throws UaSerializationException {}
+  public void encodeInt32(String field, Integer value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeInt64(String field, Long value) throws UaSerializationException {}
+  public void encodeInt64(String field, Long value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeByte(String field, UByte value) throws UaSerializationException {}
+  public void encodeByte(String field, UByte value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeUInt16(String field, UShort value) throws UaSerializationException {}
+  public void encodeUInt16(String field, UShort value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeUInt32(String field, UInteger value) throws UaSerializationException {}
+  public void encodeUInt32(String field, UInteger value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);}
 
   @Override
-  public void encodeUInt64(String field, ULong value) throws UaSerializationException {}
+  public void encodeUInt64(String field, ULong value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeFloat(String field, Float value) throws UaSerializationException {}
+  public void encodeFloat(String field, Float value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeDouble(String field, Double value) throws UaSerializationException {}
+  public void encodeDouble(String field, Double value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeString(String field, String value) throws UaSerializationException {}
+  public void encodeString(String field, String value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeDateTime(String field, DateTime value) throws UaSerializationException {}
+  public void encodeDateTime(String field, DateTime value) throws UaSerializationException {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss'Z'");
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(formatter.format(value.getJavaInstant())));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeGuid(String field, UUID value) throws UaSerializationException {}
+  public void encodeGuid(String field, UUID value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString())); //Java UUID is GUID in OPCUA
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeByteString(String field, ByteString value) throws UaSerializationException {}
+  public void encodeByteString(String field, ByteString value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeXmlElement(String field, XmlElement value) throws UaSerializationException {}
+  public void encodeXmlElement(String field, XmlElement value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.getFragmentOrEmpty()));
+
+    currentNode.appendChild(element);
+  }
 
   @Override
-  public void encodeNodeId(String field, NodeId value) throws UaSerializationException {}
+  public void encodeNodeId(String field, NodeId value) throws UaSerializationException {
+    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+
+    element.appendChild(document.createTextNode(value.toString())); //
+
+    currentNode.appendChild(element);
+  }
 
   @Override
   public void encodeExpandedNodeId(String field, ExpandedNodeId value)
@@ -182,7 +301,7 @@ public class OpcUaXmlEncoder implements UaEncoder {
       throws UaSerializationException {
     NodeId localDateTypeId =
         dataTypeId
-            .toNodeId(context.getNamespaceTable())
+            .toNodeId(encodingContext.getNamespaceTable())
             .orElseThrow(
                 () ->
                     new UaSerializationException(
@@ -348,7 +467,7 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
     NodeId localDateTypeId =
         dataTypeId
-            .toNodeId(context.getNamespaceTable())
+            .toNodeId(encodingContext.getNamespaceTable())
             .orElseThrow(
                 () ->
                     new UaSerializationException(

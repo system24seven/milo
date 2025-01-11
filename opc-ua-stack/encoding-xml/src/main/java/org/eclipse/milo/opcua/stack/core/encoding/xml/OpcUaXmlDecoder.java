@@ -232,9 +232,16 @@ public class OpcUaXmlDecoder implements UaDecoder {
 
   @Override
   public Float decodeFloat(String field) throws UaSerializationException {
+    float floatValue;
     if (currentNode(field)) {
       try {
-        return DatatypeConverter.parseFloat(currentNode.getTextContent());
+        floatValue = switch(currentNode.getTextContent()){
+          case "Infinity" -> Float.POSITIVE_INFINITY;
+          case "-Infinity" -> Float.NEGATIVE_INFINITY;
+          case "NaN" -> Float.NaN;
+          default -> DatatypeConverter.parseFloat(currentNode.getTextContent());
+        };
+        return floatValue;
       } catch (NumberFormatException e) {
         throw new UaSerializationException(StatusCodes.Bad_DecodingError, e);
       } finally {
@@ -247,9 +254,16 @@ public class OpcUaXmlDecoder implements UaDecoder {
 
   @Override
   public Double decodeDouble(String field) throws UaSerializationException {
+    double doubleValue;
     if (currentNode(field)) {
       try {
-        return DatatypeConverter.parseDouble(currentNode.getTextContent());
+        doubleValue = switch(currentNode.getTextContent()){
+          case "Infinity" -> Double.POSITIVE_INFINITY;
+          case "-Infinity" -> Double.NEGATIVE_INFINITY;
+          case "NaN" -> Double.NaN;
+          default -> DatatypeConverter.parseDouble(currentNode.getTextContent());
+        };
+        return doubleValue;
       } catch (NumberFormatException e) {
         throw new UaSerializationException(StatusCodes.Bad_DecodingError, e);
       } finally {
