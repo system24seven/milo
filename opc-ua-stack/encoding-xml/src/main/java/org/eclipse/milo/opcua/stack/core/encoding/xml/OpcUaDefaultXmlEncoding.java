@@ -23,6 +23,8 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.XmlElement;
 import org.xml.sax.SAXException;
 
+import javax.xml.transform.TransformerException;
+
 public class OpcUaDefaultXmlEncoding implements DataTypeEncoding {
 
   public static final QualifiedName ENCODING_NAME = new QualifiedName(0, "Default XML");

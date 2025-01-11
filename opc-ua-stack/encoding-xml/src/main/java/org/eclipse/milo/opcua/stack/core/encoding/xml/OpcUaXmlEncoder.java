@@ -10,9 +10,14 @@
 
 package org.eclipse.milo.opcua.stack.core.encoding.xml;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import javax.xml.parsers.DocumentBuilder;
@@ -52,7 +57,10 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
 import org.eclipse.milo.opcua.stack.core.util.Namespaces;
 import org.eclipse.milo.opcua.stack.core.util.SecureXmlUtil;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class OpcUaXmlEncoder implements UaEncoder {
 
@@ -211,11 +219,17 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public void encodeDateTime(String field, DateTime value) throws UaSerializationException {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss'Z'");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone( ZoneId.of("UTC"));
     Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
-
-    element.appendChild(document.createTextNode(formatter.format(value.getJavaInstant())));
-
+    if (value.getJavaInstant().toEpochMilli() >= DateTime.MIN_ISO_8601_INSTANT.toEpochMilli()) {
+      if (value.getJavaInstant().toEpochMilli() <= DateTime.MAX_ISO_8601_INSTANT.toEpochMilli()) {
+        element.appendChild(document.createTextNode(formatter.format(value.getJavaInstant())));
+      } else {
+        element.appendChild(document.createTextNode(formatter.format(DateTime.MAX_ISO_8601_INSTANT)));
+      }
+    } else {
+      element.appendChild(document.createTextNode(formatter.format(DateTime.MIN_ISO_8601_INSTANT)));
+    }
     currentNode.appendChild(element);
   }
 
@@ -232,18 +246,26 @@ public class OpcUaXmlEncoder implements UaEncoder {
   public void encodeByteString(String field, ByteString value) throws UaSerializationException {
     Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
 
-    element.appendChild(document.createTextNode(value.toString()));
+    element.appendChild(document.createTextNode(Base64.getEncoder().encodeToString(value.bytes())));
 
     currentNode.appendChild(element);
   }
 
   @Override
   public void encodeXmlElement(String field, XmlElement value) throws UaSerializationException {
-    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+    Document newDocument;
+    try {
+      newDocument = builder.parse(new InputSource(new StringReader(value.getFragmentOrEmpty())));
+    } catch (SAXException e) {
+      throw new UaRuntimeException(e);
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
 
-    element.appendChild(document.createTextNode(value.getFragmentOrEmpty()));
-
-    currentNode.appendChild(element);
+   // element.setTextContent(value.getFragmentOrEmpty());
+    //Node element = document.createElement(field);
+    //element.appendChild(document.createTextNode(value.getFragmentOrEmpty()));
+    currentNode.appendChild( document.importNode(newDocument.getDocumentElement(), true));
   }
 
   @Override
