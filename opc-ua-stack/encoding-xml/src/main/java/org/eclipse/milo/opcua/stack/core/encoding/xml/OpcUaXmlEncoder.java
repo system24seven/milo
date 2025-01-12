@@ -21,6 +21,7 @@ import java.util.Base64;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -253,19 +254,20 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public void encodeXmlElement(String field, XmlElement value) throws UaSerializationException {
-    Document newDocument;
+    Node fragmentNode;
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder tempBuilder;
     try {
-      newDocument = builder.parse(new InputSource(new StringReader(value.getFragmentOrEmpty())));
-    } catch (SAXException e) {
+      tempBuilder = factory.newDocumentBuilder();
+      Document tempDocument = tempBuilder.parse(new InputSource(new StringReader(value.getFragmentOrEmpty())));
+      fragmentNode = tempDocument.getFirstChild();
+    } catch (Exception e) {
       throw new UaRuntimeException(e);
-    } catch (IOException e) {
-        throw new RuntimeException(e);
     }
-
-   // element.setTextContent(value.getFragmentOrEmpty());
-    //Node element = document.createElement(field);
-    //element.appendChild(document.createTextNode(value.getFragmentOrEmpty()));
-    currentNode.appendChild( document.importNode(newDocument.getDocumentElement(), true));
+    fragmentNode = document.importNode(fragmentNode, true);
+    Node element = document.createElement(field);
+    element.appendChild(fragmentNode);
+    currentNode.appendChild(element);
   }
 
   @Override

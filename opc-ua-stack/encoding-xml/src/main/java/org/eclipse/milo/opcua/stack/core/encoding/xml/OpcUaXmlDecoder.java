@@ -340,7 +340,7 @@ public class OpcUaXmlDecoder implements UaDecoder {
   public XmlElement decodeXmlElement(String field) throws UaSerializationException {
     if (currentNode(field)) {
       try {
-        return nodeToXmlElement(currentNode);
+        return nodeToXmlElement(currentNode.getFirstChild());
       } finally {
         currentNode = currentNode.getNextSibling();
       }
