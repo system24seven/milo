@@ -13,8 +13,7 @@ package org.eclipse.milo.opcua.stack.core.encoding.xml;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ushort;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -82,17 +81,17 @@ class OpcUaXmlEncoderTest {
   public void writeSByte() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
-    encoder.encodeSByte("SByte", Byte.MIN_VALUE);
+    encoder.encodeSByte("null", Byte.MIN_VALUE);
 
     OpcUaXmlDecoder decoder =
             new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
 
-    assertEquals(Byte.MIN_VALUE,decoder.decodeSByte("SByte"));
+    assertEquals(Byte.MIN_VALUE,decoder.decodeSByte("null"));
 
     encoder.reset();
-    encoder.encodeSByte("sByteValue", Byte.MAX_VALUE);
+    encoder.encodeSByte("foo", Byte.MAX_VALUE);
     decoder.setInput(new StringReader(encoder.getDocumentXml()));
-    assertEquals(Byte.MAX_VALUE,decoder.decodeSByte("sByteValue"));
+    assertEquals(Byte.MAX_VALUE,decoder.decodeSByte("foo"));
   }
 
   @Test
@@ -421,42 +420,49 @@ class OpcUaXmlEncoderTest {
     // IdType == UInt32, Namespace != 0, reversible
     encoder.reset();
     encoder.encodeNodeId("UInt32", new NodeId(1, uint(0)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(1, uint(0)), decoder.decodeNodeId("UInt32"));
 
     // IdType == String, Namespace = 0, reversible
     encoder.reset();
     encoder.encodeNodeId("String", new NodeId(0, "foo"));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(0, "foo"), decoder.decodeNodeId("String"));
 
     // IdType == String, Namespace != 0, reversible
     encoder.reset();
     encoder.encodeNodeId("String", new NodeId(1, "foo"));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(1, "foo"), decoder.decodeNodeId("String"));
 
     // IdType == Guid, Namespace = 0, reversible
     UUID uuid = UUID.randomUUID();
     encoder.reset();
     encoder.encodeNodeId("Guid", new NodeId(0, uuid));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(0, uuid), decoder.decodeNodeId("Guid"));
 
     // IdType == Guid, Namespace != 0, reversible
     encoder.reset();
     encoder.encodeNodeId("Guid", new NodeId(1, uuid));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(1, uuid), decoder.decodeNodeId("Guid"));
 
     // IdType == ByteString, Namespace = 0, reversible
     ByteString bs = ByteString.of(randomBytes(16));
     encoder.reset();
     encoder.encodeNodeId("ByteString", new NodeId(0, bs));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(0, bs), decoder.decodeNodeId("ByteString"));
 
     // IdType == ByteString, Namespace != 0, reversible
     encoder.reset();
     encoder.encodeNodeId("ByteString", new NodeId(1, bs));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(1, bs), decoder.decodeNodeId("ByteString"));
 
 
-    //encoder.reversible = false;
+    encoder.reversible = false;
     encoder.encodingContext = new DefaultEncodingContext();
     encoder.encodingContext.getNamespaceTable().add("urn:eclipse:milo:test1");
     encoder.encodingContext.getNamespaceTable().add("urn:eclipse:milo:test2");
@@ -464,23 +470,27 @@ class OpcUaXmlEncoderTest {
     // IdType == UInt32, Namespace = 0, non-reversible
     encoder.reset();
     encoder.encodeNodeId("Uint32", new NodeId(0, uint(0)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(0, uint(0)), decoder.decodeNodeId("Uint32"));
 
     // IdType == UInt32, Namespace = 1, non-reversible
     // IdType == UInt32, Namespace = 0, non-reversible
     encoder.reset();
     encoder.encodeNodeId("Uint32", new NodeId(1, uint(0)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(1, uint(0)), decoder.decodeNodeId("Uint32"));
 
 
     // IdType == UInt32, Namespace > 1, non-reversible
     encoder.reset();
     encoder.encodeNodeId("Uint32", new NodeId(2, uint(0)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(2, uint(0)), decoder.decodeNodeId("Uint32"));
 
     // Namespace > 1 but not in table, non-reversible
     encoder.reset();
     encoder.encodeNodeId("Uint32", new NodeId(99, uint(0)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
     assertEquals(new NodeId(99, uint(0)), decoder.decodeNodeId("Uint32"));
 
     // key != null
@@ -492,8 +502,7 @@ class OpcUaXmlEncoderTest {
   }
 
   @Test
-  public void writeExpandedNodeId() throws IOException {
-    var writer = new StringWriter();
+  public void writeExpandedNodeId() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
     // Two things differentiate the encoding of ExpandedNodeId from NodeId:
@@ -502,15 +511,19 @@ class OpcUaXmlEncoderTest {
     // field
 
     // reversible, namespace URI specified
-    encoder.encodeExpandedNodeId(null, new ExpandedNodeId(ushort(0), Namespaces.OPC_UA, "foo"));
-    assertEquals(
-            "{\"IdType\":1,\"Id\":\"foo\",\"Namespace\":\"http://opcfoundation.org/UA/\"}",
-            writer.toString());
+    encoder.encodeExpandedNodeId("ExpandedNodeId", new ExpandedNodeId(ushort(0), Namespaces.OPC_UA, "foo"));
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+
+    assertEquals(new ExpandedNodeId(ushort(0), Namespaces.OPC_UA, "foo"),
+            decoder.decodeExpandedNodeId("ExpandedNodeId"));
 
     // reversible, remote server index
     encoder.reset();
-    encoder.encodeExpandedNodeId(null, new ExpandedNodeId(ushort(0), null, "foo", uint(1)));
-    assertEquals("{\"IdType\":1,\"Id\":\"foo\",\"ServerUri\":1}", writer.toString());
+    encoder.encodeExpandedNodeId("ExpandedNodeId", new ExpandedNodeId(ushort(0), null, "foo", uint(1)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new ExpandedNodeId(ushort(0), null, "foo", uint(1)),
+            decoder.decodeExpandedNodeId("ExpandedNodeId"));
 
     // non-reversible, remote server index
     //encoder.reversible = false;
@@ -518,24 +531,17 @@ class OpcUaXmlEncoderTest {
     encoder.encodingContext.getServerTable().add("urn:server:local");
     encoder.encodingContext.getServerTable().add("urn:server:remote");
     encoder.reset();
-    encoder.encodeExpandedNodeId(null, new ExpandedNodeId(ushort(0), null, "foo", uint(1)));
-    assertEquals(
-            "{\"IdType\":1,\"Id\":\"foo\",\"ServerUri\":\"urn:server:remote\"}", writer.toString());
+    encoder.encodeExpandedNodeId("ExpandedNodeId", new ExpandedNodeId(ushort(0), null, "foo", uint(1)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new ExpandedNodeId(ushort(0), null, "foo", uint(1)),
+            decoder.decodeExpandedNodeId("ExpandedNodeId"));
 
     // non-reversible, remote server index not in table
     encoder.reset();
-    encoder.encodeExpandedNodeId(null, new ExpandedNodeId(ushort(0), null, "foo", uint(2)));
-    assertEquals("{\"IdType\":1,\"Id\":\"foo\",\"ServerUri\":2}", writer.toString());
-
-    // reversible, field specified
-    //encoder.reversible = false;
-    encoder.reset();
-    //encoder.jsonWriter.beginObject();
-    encoder.encodeExpandedNodeId("foo", new ExpandedNodeId(ushort(0), Namespaces.OPC_UA, "foo"));
-    //encoder.jsonWriter.endObject();
-    assertEquals(
-            "{\"foo\":{\"IdType\":1,\"Id\":\"foo\",\"Namespace\":\"http://opcfoundation.org/UA/\"}}",
-            writer.toString());
+    encoder.encodeExpandedNodeId("ExpandedNodeId", new ExpandedNodeId(ushort(0), null, "foo", uint(2)));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new ExpandedNodeId(ushort(0), null, "foo", uint(2)),
+            decoder.decodeExpandedNodeId("ExpandedNodeId"));
   }
 
   @Test
@@ -988,37 +994,29 @@ class OpcUaXmlEncoderTest {
   }
 
   @Test
-  public void writeBooleanArray() throws IOException {
-    var writer = new StringWriter();
+  public void writeBooleanArray() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
     encoder.reset();
-    encoder.encodeBooleanArray(null, null);
-    assertEquals("", writer.toString());
-
-    encoder.reset();
-    encoder.encodeBooleanArray(null, new Boolean[] {});
-    assertEquals("[]", writer.toString());
-
-    encoder.reset();
     encoder.encodeBooleanArray(null, new Boolean[] {true, false, true});
-    assertEquals("[true,false,true]", writer.toString());
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+    assertArrayEquals(new Boolean[] {true, false, true},decoder.decodeBooleanArray(null));
 
     encoder.reset();
-    encoder.encodeBooleanArray(null, new Boolean[] {true, false, null});
-    assertEquals("[true,false,null]", writer.toString());
+    encoder.encodeBooleanArray("foo", new Boolean[] {true, false, null});
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertArrayEquals(new Boolean[] {true, false},decoder.decodeBooleanArray("foo"));
 
     encoder.reset();
-    //encoder.jsonWriter.beginObject();
     encoder.encodeBooleanArray("foo", new Boolean[] {true, false, true});
-    //encoder.jsonWriter.endObject();
-    assertEquals("{\"foo\":[true,false,true]}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertArrayEquals(new Boolean[] {true, false, true},decoder.decodeBooleanArray("foo"));
 
     encoder.reset();
-    //encoder.jsonWriter.beginObject();
     encoder.encodeBooleanArray("foo", null);
-    //encoder.jsonWriter.endObject();
-    assertEquals("{}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertNull(decoder.decodeBooleanArray("foo"));
   }
 
   @Test

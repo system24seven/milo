@@ -106,6 +106,7 @@ public class OpcUaXmlDecoder implements UaDecoder {
         currentNode = currentNode.getNextSibling();
       }
     } else {
+
       return false;
     }
   }
@@ -353,15 +354,13 @@ public class OpcUaXmlDecoder implements UaDecoder {
   public NodeId decodeNodeId(String field) throws UaSerializationException {
     if (currentNode(field)) {
       Node idNode = currentNode.getFirstChild();
-
       try {
         if (idNode != null) {
           String textContent = idNode.getTextContent();
-
           NodeId nodeId =
               NodeId.parseSafe(textContent)
                   .orElseThrow(
-                      () ->
+                     () ->
                           new UaSerializationException(
                               StatusCodes.Bad_DecodingError, "invalid NodeId: " + textContent));
 
@@ -986,10 +985,8 @@ public class OpcUaXmlDecoder implements UaDecoder {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public <T> T[] decodeArray(String field, Function<String, T> decoder, Class<T> clazz)
       throws UaSerializationException {
-
     if (currentNode(field)) {
       Node node = currentNode;
 
@@ -997,16 +994,17 @@ public class OpcUaXmlDecoder implements UaDecoder {
       Node listNode = node.getFirstChild();
 
       if (listNode != null) {
-        NodeList children = listNode.getChildNodes();
+        NodeList children = node.getChildNodes();
 
         for (int i = 0; i < children.getLength(); i++) {
           currentNode = children.item(i);
-
           if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
-            values.add(decoder.apply(currentNode.getLocalName()));
+            values.add(decoder.apply(currentNode.getNodeName()));
           }
         }
       }
+
+      currentNode = node;
 
       try {
         checkArrayLength(values.size());
@@ -1027,7 +1025,16 @@ public class OpcUaXmlDecoder implements UaDecoder {
 
   @Override
   public Boolean[] decodeBooleanArray(String field) throws UaSerializationException {
-    return decodeArray(field, this::decodeBoolean, Boolean.class);
+    Node node = currentNode;
+    if(currentNode.getFirstChild() != null) {
+      if (field != null && currentNode(field)){
+        currentNode = currentNode.getFirstChild();
+      }
+      Boolean[] retValues = decodeArray("ListOfBoolean", this::decodeBoolean, Boolean.class);
+      currentNode = node;
+      return retValues;
+    };
+    return null;
   }
 
   @Override

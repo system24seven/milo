@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Base64;
+import java.util.Stack;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import javax.xml.parsers.DocumentBuilder;
@@ -55,8 +56,11 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UByte;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.ULong;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.IdType;
+import org.eclipse.milo.opcua.stack.core.util.ArrayUtil;
 import org.eclipse.milo.opcua.stack.core.util.Namespaces;
 import org.eclipse.milo.opcua.stack.core.util.SecureXmlUtil;
+import org.jspecify.annotations.NonNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -64,7 +68,14 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class OpcUaXmlEncoder implements UaEncoder {
+  enum EncoderContext {
+    BUILTIN,
+    STRUCT
+  }
 
+  private final Stack<EncoderContext> contextStack = new Stack<>();
+
+  boolean reversible = true;
   private final DocumentBuilder builder;
 
   private Document document;
@@ -90,6 +101,10 @@ public class OpcUaXmlEncoder implements UaEncoder {
     return encodingContext;
   }
 
+  private EncoderContext contextPeek() {
+    return contextStack.isEmpty() ? EncoderContext.BUILTIN : contextStack.peek();
+  }
+
   public Document getDocument() {
     return document;
   }
@@ -113,20 +128,32 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public void encodeBoolean(String field, Boolean value) throws UaSerializationException {
-    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
-
-    element.appendChild(document.createTextNode(value.toString()));
-
-    currentNode.appendChild(element);
+    Node element;
+    if (value != null) {
+      if (field != null) {
+        element = document.createElement(field);
+        element.appendChild(document.createElement("Boolean").appendChild(document.createTextNode(value.toString())));
+      } else {
+        element = document.createElement("Boolean");
+        element.appendChild(document.createTextNode(value.toString()));
+      }
+      currentNode.appendChild(element);
+    }
   }
 
   @Override
   public void encodeSByte(String field, Byte value) throws UaSerializationException {
-    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
-
-    element.appendChild(document.createTextNode(value.toString()));
-
-    currentNode.appendChild(element);
+    Node element;
+    if (value != null) {
+      if (field != null) {
+        element = document.createElement(field);
+        element.appendChild(document.createElement("SByte").appendChild(document.createTextNode(value.toString())));
+      } else {
+        element = document.createElement("SByte");
+        element.appendChild(document.createTextNode(value.toString()));
+      }
+      currentNode.appendChild(element);
+    }
   }
 
   @Override
@@ -272,16 +299,68 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public void encodeNodeId(String field, NodeId value) throws UaSerializationException {
-    Node element = document.createElementNS(Namespaces.OPC_UA_XSD, field);
+    EncoderContext context = contextPeek();
+    Node workingNode= document.createElementNS(Namespaces.OPC_UA_XSD, field);
+    var namespaceIdentifier = new StringBuilder();
 
-    element.appendChild(document.createTextNode(value.toString())); //
+    Node identifierNode = document.createElement("Identifier");
+    String identifier =
+            switch (value.getType()) {
+              case Numeric -> "i=" + value.getIdentifier();
+              case String -> "s=" + value.getIdentifier();
+              case Guid -> "g=" + ((UUID) value.getIdentifier()).toString().toUpperCase();
+              case Opaque -> "b=" + Base64.getEncoder().encodeToString(((ByteString) value.getIdentifier()).bytesOrEmpty());
+            };
 
-    currentNode.appendChild(element);
+    if (!reversible
+            || context == EncoderContext.BUILTIN
+            || (value.isNotNull())) {
+      int namespaceIndex = value.getNamespaceIndex().intValue();
+      if (namespaceIndex > 0) {
+        namespaceIdentifier.append("ns=").append(namespaceIndex).append(";");
+      }
+    }
+    identifierNode.setTextContent(namespaceIdentifier + identifier);
+    workingNode.appendChild(identifierNode);
+    currentNode.appendChild(workingNode);
   }
 
   @Override
   public void encodeExpandedNodeId(String field, ExpandedNodeId value)
-      throws UaSerializationException {}
+      throws UaSerializationException {
+    Node workingNode= document.createElement(field);
+    var namespaceIdentifier = new StringBuilder();
+
+    Node identifierNode = document.createElement("Identifier");
+
+    //ServerIndex
+    int serverIndex = value.getServerIndex().intValue();
+    if (serverIndex > 0) {
+      namespaceIdentifier.append("svr=").append(serverIndex).append(";");
+    }
+    //NamespaceIndex
+    String namespaceUri = value.getNamespaceUri();
+    if (namespaceUri != null) {
+      namespaceIdentifier.append("nsu=").append(namespaceUri).append(";");
+    } else {
+      int namespaceIndex = value.getNamespaceIndex().intValue();
+      if (namespaceIndex > 0) {
+        namespaceIdentifier.append("ns=").append(namespaceIndex).append(";");
+      }
+    }
+
+    //Type/Value
+    namespaceIdentifier.append(
+            switch (value.getType()) {
+              case Numeric -> "i=" + value.getIdentifier();
+              case String -> "s=" + value.getIdentifier();
+              case Guid -> "g=" + ((UUID) value.getIdentifier()).toString().toUpperCase();
+              case Opaque -> "b=" + Base64.getEncoder().encodeToString(((ByteString) value.getIdentifier()).bytesOrEmpty());
+            });
+    identifierNode.setTextContent(namespaceIdentifier.toString());
+    workingNode.appendChild(identifierNode);
+    currentNode.appendChild(workingNode);
+  }
 
   @Override
   public void encodeStatusCode(String field, StatusCode value) throws UaSerializationException {}
@@ -340,7 +419,13 @@ public class OpcUaXmlEncoder implements UaEncoder {
 
   @Override
   public void encodeBooleanArray(String field, Boolean[] value) throws UaSerializationException {
-    encodeArray(field, value, this::encodeBoolean);
+    if ( field !=null ){
+      currentNode = currentNode.appendChild(document.createElement(field));
+      encodeArray("ListOfBoolean", value, this::encodeBoolean);
+      currentNode = currentNode.getParentNode();
+    } else {
+      encodeArray("ListOfBoolean", value, this::encodeBoolean);
+    }
   }
 
   @Override
@@ -501,8 +586,19 @@ public class OpcUaXmlEncoder implements UaEncoder {
   }
 
   @Override
-  public <T> void encodeArray(String field, T[] values, BiConsumer<String, T> encoder)
-      throws UaSerializationException {}
+  public <T> void encodeArray(@NonNull String field, @NonNull T[] values, @NonNull BiConsumer<String, T> encoder)
+      throws UaSerializationException {
+    if (values == null) {
+      return;
+    }
+    Node workingNode = document.createElement(field);
+    currentNode.appendChild(workingNode);
+    currentNode = currentNode.getFirstChild();
+    for (T value : values) {
+      encoder.accept(null, value);
+    }
+    currentNode = currentNode.getParentNode();
+  }
 
   @Override
   public void encodeMatrix(String field, Matrix value) throws UaSerializationException {}

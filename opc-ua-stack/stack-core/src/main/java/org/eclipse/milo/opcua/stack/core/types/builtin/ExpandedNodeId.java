@@ -528,7 +528,7 @@ public final class ExpandedNodeId {
         s = s.substring(endIndex + 1);
       }
 
-      UShort namespaceIndex = UShort.MIN;
+      UShort namespaceIndex = ushort(0);
       String namespaceUri = null;
       if (s.startsWith("ns=")) {
         int endIndex = s.indexOf(";");
@@ -537,6 +537,11 @@ public final class ExpandedNodeId {
       } else if (s.startsWith("nsu=")) {
         int endIndex = s.indexOf(";");
         namespaceUri = s.substring(4, endIndex);
+        if (namespaceUri != null){
+          namespaceIndex = ushort(0);
+        } else {
+          namespaceIndex = UShort.MIN;
+        }
         s = s.substring(endIndex + 1);
       }
 
