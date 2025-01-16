@@ -47,7 +47,11 @@ public final class LocalizedText {
 
   @Nullable
   public String getText() {
-    return text;
+    if (Objects.equals(text, "")) {
+      return null;
+    } else {
+      return text;
+    }
   }
 
   public boolean isNull() {

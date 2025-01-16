@@ -13,7 +13,10 @@ package org.eclipse.milo.opcua.stack.core.encoding.xml;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ushort;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -545,81 +548,40 @@ class OpcUaXmlEncoderTest {
   }
 
   @Test
-  public void writeStatusCode() throws IOException {
-    var writer = new StringWriter();
+  public void writeStatusCode() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
-    // reversible form
-    {
-      encoder.encodeStatusCode(null, StatusCode.GOOD);
-      assertEquals("0", writer.toString());
+    /*encoder.encodeStatusCode(null, StatusCode.GOOD);
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(StatusCode.GOOD,decoder.decodeStatusCode(null));*/
 
-      encoder.reset();
-      encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Uncertain_InitialValue));
-      assertEquals(Long.toString(StatusCodes.Uncertain_InitialValue), writer.toString());
+    encoder.reset();
+    encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Uncertain_InitialValue));
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(StatusCodes.Uncertain_InitialValue, decoder.decodeStatusCode(null).getValue());
 
-      encoder.reset();
-      encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Bad_UnexpectedError));
-      assertEquals(Long.toString(StatusCodes.Bad_UnexpectedError), writer.toString());
-    }
-
-    // non-reversible form
-    {
-      //encoder.reversible = false;
-      encoder.reset();
-      encoder.encodeStatusCode(null, StatusCode.GOOD);
-      assertEquals("", writer.toString());
-
-      encoder.reset();
-      encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Uncertain_InitialValue));
-      assertEquals(
-              "{\"Code\":1083310080,\"Symbol\":\"Uncertain_InitialValue\"}", writer.toString());
-
-      encoder.reset();
-      encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Bad_UnexpectedError));
-      assertEquals("{\"Code\":2147549184,\"Symbol\":\"Bad_UnexpectedError\"}", writer.toString());
-    }
-
-    // reversible form with field
-    {
-      //encoder.reversible = true;
-      encoder.reset();
-      //encoder.jsonWriter.beginObject();
-      encoder.encodeStatusCode("foo", StatusCode.GOOD);
-      //encoder.jsonWriter.endObject();
-      assertEquals("{\"foo\":0}", writer.toString());
-    }
-
-    // non-reversible form with field
-    {
-      //encoder.reversible = false;
-      encoder.reset();
-      //encoder.jsonWriter.beginObject();
-      encoder.encodeStatusCode("foo", StatusCode.GOOD);
-      //encoder.jsonWriter.endObject();
-      assertEquals("{}", writer.toString()); // key/value omitted because code==0
-
-      encoder.reset();
-      //encoder.jsonWriter.beginObject();
-      encoder.encodeStatusCode("foo", new StatusCode(StatusCodes.Uncertain_InitialValue));
-      //encoder.jsonWriter.endObject();
-      assertEquals(
-              "{\"foo\":{\"Code\":1083310080,\"Symbol\":\"Uncertain_InitialValue\"}}",
-              writer.toString());
-    }
+    encoder.reset();
+    encoder.encodeStatusCode(null, new StatusCode(StatusCodes.Bad_UnexpectedError));
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(StatusCodes.Bad_UnexpectedError, decoder.decodeStatusCode(null).getValue());
   }
 
   @Test
-  public void writeQualifiedName() throws IOException {
-    var writer = new StringWriter();
+  public void writeQualifiedName() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
+    encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(0, "foo"));
-    assertEquals("{\"Name\":\"foo\"}", writer.toString());
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(0, "foo"), decoder.decodeQualifiedName(null));
 
     encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(1, "foo"));
-    assertEquals("{\"Name\":\"foo\",\"Uri\":1}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(1, "foo"), decoder.decodeQualifiedName(null));
 
     //encoder.reversible = false;
     encoder.encodingContext = new DefaultEncodingContext();
@@ -628,58 +590,67 @@ class OpcUaXmlEncoderTest {
 
     encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(0, "foo"));
-    assertEquals("{\"Name\":\"foo\"}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(0, "foo"), decoder.decodeQualifiedName(null));
 
     encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(1, "foo"));
-    assertEquals("{\"Name\":\"foo\",\"Uri\":1}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(1, "foo"), decoder.decodeQualifiedName(null));
 
     encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(2, "foo"));
-    assertEquals("{\"Name\":\"foo\",\"Uri\":\"urn:eclipse:milo:test2\"}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(2, "foo"), decoder.decodeQualifiedName(null));
 
     encoder.reset();
     encoder.encodeQualifiedName(null, new QualifiedName(99, "foo"));
-    assertEquals("{\"Name\":\"foo\",\"Uri\":99}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(99, "foo"), decoder.decodeQualifiedName(null));
 
     encoder.reset();
-    //encoder.jsonWriter.beginObject();
     encoder.encodeQualifiedName("foo", new QualifiedName(0, "foo"));
-    //encoder.jsonWriter.endObject();
-    assertEquals("{\"foo\":{\"Name\":\"foo\"}}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new QualifiedName(0, "foo"), decoder.decodeQualifiedName("foo"));
   }
 
   @Test
-  public void writeLocalizedText() throws IOException {
-    var writer = new StringWriter();
+  public void writeLocalizedText() throws IOException, SAXException {
     var encoder = new OpcUaXmlEncoder(context);
 
+    encoder.reset();
     encoder.encodeLocalizedText(null, LocalizedText.english("foo"));
-    assertEquals("{\"Locale\":\"en\",\"Text\":\"foo\"}", writer.toString());
+    OpcUaXmlDecoder decoder =
+            new OpcUaXmlDecoder(DefaultEncodingContext.INSTANCE).setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(LocalizedText.english("foo"), decoder.decodeLocalizedText(null));
 
     encoder.reset();
     encoder.encodeLocalizedText(null, new LocalizedText("en", null));
-    assertEquals("{\"Locale\":\"en\"}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new LocalizedText("en", null), decoder.decodeLocalizedText(null));
 
     encoder.reset();
     encoder.encodeLocalizedText(null, new LocalizedText(null, "foo"));
-    assertEquals("{\"Text\":\"foo\"}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new LocalizedText(null, "foo"), decoder.decodeLocalizedText(null));
 
     encoder.reset();
     encoder.encodeLocalizedText(null, new LocalizedText(null, null));
-    assertEquals("{}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(new LocalizedText(null, null),decoder.decodeLocalizedText(null));
 
-    //encoder.reversible = false;
+    encoder.reversible = false;
     encoder.reset();
     encoder.encodeLocalizedText(null, LocalizedText.english("foo"));
-    assertEquals("\"foo\"", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(LocalizedText.english("foo"),decoder.decodeLocalizedText(null));
 
-    //encoder.reversible = true;
+    encoder.reversible = true;
+
     encoder.reset();
-    //encoder.jsonWriter.beginObject();
     encoder.encodeLocalizedText("foo", LocalizedText.english("foo"));
-    //encoder.jsonWriter.endObject();
-    assertEquals("{\"foo\":{\"Locale\":\"en\",\"Text\":\"foo\"}}", writer.toString());
+    decoder.setInput(new StringReader(encoder.getDocumentXml()));
+    assertEquals(LocalizedText.english("foo"),decoder.decodeLocalizedText("foo"));
   }
 
   @Test

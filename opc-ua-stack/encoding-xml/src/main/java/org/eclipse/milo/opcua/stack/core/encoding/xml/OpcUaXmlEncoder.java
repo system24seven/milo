@@ -363,15 +363,76 @@ public class OpcUaXmlEncoder implements UaEncoder {
   }
 
   @Override
-  public void encodeStatusCode(String field, StatusCode value) throws UaSerializationException {}
+  public void encodeStatusCode(String field, StatusCode value) throws UaSerializationException {
+    Node element;
+    //Don't print a GOOD status code.
+    if (value != null && !value.isGood()) {
+      if (field != null) {
+        element = document.createElement(field);
+        element.appendChild(document.createElement("StatusCode")
+                .appendChild(document.createElement("Code"))
+                .appendChild(document.createTextNode(Long.toString(value.getValue()))));
+      } else {
+        element = document.createElement("StatusCode");
+        element.appendChild(document.createElement("Code"))
+                .appendChild(document.createTextNode(Long.toString(value.getValue())));
+      }
+      currentNode.appendChild(element);
+    }
+  }
 
   @Override
   public void encodeQualifiedName(String field, QualifiedName value)
-      throws UaSerializationException {}
+      throws UaSerializationException {
+    Element element;
+
+    if (field != null) {
+      element = document.createElement(field);
+      Element qualifiedNameElement = document.createElement("QualifiedName");
+      Element namespaceIndex = document.createElement("NamespaceIndex");
+      Element name = document.createElement("Name");
+      namespaceIndex.appendChild(document.createTextNode(String.valueOf(value.getNamespaceIndex())));
+      name.appendChild(document.createTextNode(value.getName()));
+      qualifiedNameElement.appendChild(namespaceIndex);
+      qualifiedNameElement.appendChild(name);
+      element.appendChild(qualifiedNameElement);
+    } else {
+      element = document.createElement("QualifiedName");
+      Element namespaceIndex = document.createElement("NamespaceIndex");
+      Element name = document.createElement("Name");
+      namespaceIndex.appendChild(document.createTextNode(String.valueOf(value.getNamespaceIndex())));
+      name.appendChild(document.createTextNode(value.getName()));
+      element.appendChild(namespaceIndex);
+      element.appendChild(name);
+    }
+    currentNode.appendChild(element);
+  }
 
   @Override
   public void encodeLocalizedText(String field, LocalizedText value)
-      throws UaSerializationException {}
+      throws UaSerializationException {
+    Element element;
+
+    if (field != null) {
+      element = document.createElement(field);
+      Element qualifiedNameElement = document.createElement("LocalizedText");
+      Element locale = document.createElement("Locale");
+      Element text = document.createElement("Text");
+      locale.appendChild(document.createTextNode(value.getLocale()));
+      text.appendChild(document.createTextNode(value.getText()));
+      qualifiedNameElement.appendChild(locale);
+      qualifiedNameElement.appendChild(text);
+      element.appendChild(qualifiedNameElement);
+    } else {
+      element = document.createElement("LocalizedText");
+      Element locale = document.createElement("Locale");
+      Element text = document.createElement("Text");
+      locale.appendChild(document.createTextNode(value.getLocale()));
+      text.appendChild(document.createTextNode(value.getText()));
+      element.appendChild(locale);
+      element.appendChild(text);
+    }
+    currentNode.appendChild(element);}
 
   @Override
   public void encodeExtensionObject(String field, ExtensionObject value)
