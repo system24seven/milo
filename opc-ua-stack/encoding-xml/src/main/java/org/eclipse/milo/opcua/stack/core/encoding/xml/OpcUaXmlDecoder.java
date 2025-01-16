@@ -424,7 +424,37 @@ public class OpcUaXmlDecoder implements UaDecoder {
 
   @Override
   public QualifiedName decodeQualifiedName(String field) throws UaSerializationException {
-    if (currentNode(field)) {
+    Node node = currentNode;
+    if (field != null) {
+      if (currentNode(field)) {
+        currentNode = currentNode.getFirstChild();
+        try {
+          Map<String, Node> children = nodeMap(currentNode.getChildNodes());
+
+          int namespaceIndex = 0;
+          String name = null;
+
+          Node namespaceIndexNode = children.get("NamespaceIndex");
+          if (namespaceIndexNode != null) {
+            namespaceIndex = DatatypeConverter.parseInt(namespaceIndexNode.getTextContent());
+          }
+
+          Node nameNode = children.get("Name");
+          if (nameNode != null) {
+            name = nameNode.getTextContent();
+          }
+          currentNode = node;
+
+          return reindexQualifiedName(new QualifiedName(namespaceIndex, name));
+        } catch (Throwable t) {
+          throw new UaSerializationException(StatusCodes.Bad_DecodingError, t);
+        } finally {
+          currentNode = currentNode.getNextSibling();
+        }
+      } else {
+        return QualifiedName.NULL_VALUE;
+      }
+    } else {
       try {
         Map<String, Node> children = nodeMap(currentNode.getChildNodes());
 
@@ -447,14 +477,48 @@ public class OpcUaXmlDecoder implements UaDecoder {
       } finally {
         currentNode = currentNode.getNextSibling();
       }
-    } else {
-      return QualifiedName.NULL_VALUE;
     }
   }
 
   @Override
   public LocalizedText decodeLocalizedText(String field) throws UaSerializationException {
-    if (currentNode(field)) {
+    Node node = currentNode;
+    if(field != null) {
+      if (currentNode(field)) {
+        currentNode = currentNode.getFirstChild();
+        try {
+          Map<String, Node> children = nodeMap(currentNode.getChildNodes());
+
+          String locale = null;
+          String text = null;
+
+          Node localeNode = children.get("Locale");
+          if (localeNode != null) {
+            locale = localeNode.getTextContent();
+            if(locale.isEmpty()) {
+              locale = null;
+            }
+          }
+
+          Node textNode = children.get("Text");
+          if (textNode != null) {
+            text = textNode.getTextContent();
+            if(text.isEmpty()) {
+              text = null;
+            }
+          }
+          currentNode = node;
+
+          return new LocalizedText(locale, text);
+        } catch (Throwable t) {
+          throw new UaSerializationException(StatusCodes.Bad_DecodingError, t);
+        } finally {
+          currentNode = currentNode.getNextSibling();
+        }
+      } else {
+        return LocalizedText.NULL_VALUE;
+      }
+    } else {
       try {
         Map<String, Node> children = nodeMap(currentNode.getChildNodes());
 
@@ -464,11 +528,17 @@ public class OpcUaXmlDecoder implements UaDecoder {
         Node localeNode = children.get("Locale");
         if (localeNode != null) {
           locale = localeNode.getTextContent();
+          if (locale.isEmpty()) {
+            locale = null;
+          }
         }
 
         Node textNode = children.get("Text");
         if (textNode != null) {
           text = textNode.getTextContent();
+          if (text.isEmpty()) {
+            text = null;
+          }
         }
 
         return new LocalizedText(locale, text);
@@ -477,8 +547,6 @@ public class OpcUaXmlDecoder implements UaDecoder {
       } finally {
         currentNode = currentNode.getNextSibling();
       }
-    } else {
-      return LocalizedText.NULL_VALUE;
     }
   }
 
